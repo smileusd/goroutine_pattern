@@ -7,6 +7,7 @@ import (
 	"sync"
 )
 
+// Pool is a pool of closable resources
 type Pool struct {
 	m         *sync.RWMutex
 	resources chan io.Closer
@@ -14,6 +15,7 @@ type Pool struct {
 	factory   func() (io.Closer, error)
 }
 
+// New a pool with default produce function
 func New(fn func() (io.Closer, error), size uint) (*Pool, error) {
 	if size <= 0 {
 		return nil, fmt.Errorf("pool size too small")
@@ -26,6 +28,7 @@ func New(fn func() (io.Closer, error), size uint) (*Pool, error) {
 	}, nil
 }
 
+// Acquire a resource from pool
 func (p *Pool) Acquire() (io.Closer, error) {
 	p.m.RLock()
 	p.m.RUnlock()
@@ -42,6 +45,7 @@ func (p *Pool) Acquire() (io.Closer, error) {
 	}
 }
 
+// Release and close a resource to pool
 func (p *Pool) Release(r io.Closer) {
 	p.m.Lock()
 	defer p.m.Unlock()
@@ -61,6 +65,7 @@ func (p *Pool) Release(r io.Closer) {
 	}
 }
 
+// Close pool at the same time closed all the resource in pool
 func (p *Pool) Close() {
 	p.m.Lock()
 	defer p.m.Unlock()
